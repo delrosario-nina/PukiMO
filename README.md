@@ -105,7 +105,9 @@ Main Characteristics:
    Used for counts, levels, turns, friendliness, etc.
 
    Examples:
+   ```
    myZone = SafariZone(10, 20);
+   ```
 
 ### 2. Strings
    Enclosed in double quotes " " for names, properties, or messages.
