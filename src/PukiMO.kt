@@ -1,112 +1,150 @@
-enum class TokenType {
-    KEYWORD, IDENTIFIER, NUMBER, STRING,
-    OPERATOR, DELIMITER, DOT, ARROW, SEMICOLON,
+// token type
+enum class TokenType(val symbols: Set<String>? = null) {
+    KEYWORD(setOf(
+        "if", "else", "explore", "run", "define", "print", "throwBall",
+        "null", "true", "false", "SafariZone", "Team", "const"
+    )),
+    IDENTIFIER,
+    LITERAL,
+    OPERATOR(setOf("+", "-", "*", "/", "%", "=", "<", ">", "!", "==", "!=", "<=", ">=", "&&", "||")),
+    ARROW(setOf("->")),
+    DELIMITER(setOf("(", ")", "{", "}", "[", "]", ",")),
+    DOT(setOf(".")),
+    SEMICOLON(setOf(";")),
     EOF
 }
 
-data class Token(val type: TokenType, val lexeme: String, val line: Int)
+// token
+data class Token(val type: TokenType, val lexeme: String, val literal: Any?, val lineNumber: Int)
 
-fun isKeyword(word: String): Boolean {
-    return setOf("if", "else", "explore", "run", "define", "print", "throwBall",
-        "true", "false", "null", "SafariZone", "Team").contains(word)
+// helper functions
+// extension function if symbols contain symbol return true otherwise false
+fun TokenType.contains(symbol: String): Boolean {
+    return symbols?.contains(symbol) ?: false
 }
 
-fun scanWord(source: String, start: Int, line: Int): Pair<Token, Int> {
-    var i = start
-    while (i < source.length && (source[i].isLetterOrDigit() || source[i] == '_')) i++
-    val text = source.substring(start, i)
-    val type = if (isKeyword(text)) TokenType.KEYWORD else TokenType.IDENTIFIER
-    return Token(type, text, line) to i
+//switch case for null, true, false, and keyword
+fun classifyWord(word: String): Pair<TokenType, Any?> {
+    return when {
+        word == "null" -> TokenType.LITERAL to null
+        word == "true" -> TokenType.LITERAL to true
+        word == "false" -> TokenType.LITERAL to false
+        TokenType.KEYWORD.contains(word) -> TokenType.KEYWORD to null
+        else -> TokenType.IDENTIFIER to null
+    }
 }
 
-fun scanNumber(source: String, start: Int, line: Int): Pair<Token, Int> {
-    var i = start
-    while (i < source.length && source[i].isDigit()) i++
-    val text = source.substring(start, i)
-    return Token(TokenType.NUMBER, text, line) to i
+// scanners
+fun scanIdentifierOrKeyword(source: String, start: Int, lineNumber: Int): Pair<Token, Int> {
+    var index = start
+    while (index < source.length && (source[index].isLetterOrDigit() || source[index] == '_')) index++
+    val lexeme = source.substring(start, index)
+    val (type, literal) = classifyWord(lexeme)
+    return Token(type, lexeme, literal, lineNumber) to index
 }
 
-fun scanString(source: String, start: Int, line: Int): Pair<Token, Int> {
-    var i = start + 1
+fun scanNumber(source: String, start: Int, lineNumber: Int): Pair<Token, Int> {
+    var index = start
+    while (index < source.length && source[index].isDigit()) index++
+    val lexeme = source.substring(start, index)
+    val literal = lexeme.toIntOrNull()
+        ?: throw IllegalArgumentException("Invalid integer '$lexeme' at line $lineNumber")
+    return Token(TokenType.LITERAL, lexeme, literal, lineNumber) to index
+}
+
+fun scanString(source: String, start: Int, lineNumber: Int): Pair<Token, Int> {
+    var index = start + 1
     val sb = StringBuilder()
-    while (i < source.length && source[i] != '"') {
-        sb.append(source[i])
-        i++
+    var currentLine = lineNumber
+
+    while (index < source.length && source[index] != '"') {
+        if (source[index] == '\n') currentLine++
+        sb.append(source[index])
+        index++
     }
-    if (i >= source.length) throw Exception("Unterminated string at line $line")
-    i++ // skip closing quote
-    return Token(TokenType.STRING, sb.toString(), line) to i
+    if (index >= source.length) throw IllegalArgumentException("Unterminated string at line $currentLine")
+    index++
+    val lexeme = sb.toString()
+    return Token(TokenType.LITERAL, lexeme, lexeme, currentLine) to index
 }
 
-fun scanOperator(source: String, start: Int, line: Int): Pair<Token, Int> {
-    val twoCharOps = setOf("==", "!=", "<=", ">=", "&&", "||", "->")
+fun scanOperator(source: String, start: Int, lineNumber: Int): Pair<Token, Int> {
+    // Check two-character operators first
     if (start + 1 < source.length) {
-        val two = source.substring(start, start + 2)
-        if (two in twoCharOps) {
-            return Token(if (two == "->") TokenType.ARROW else TokenType.OPERATOR, two, line) to (start + 2)
-        }
+        val twoChar = source.substring(start, start + 2)
+        if (TokenType.ARROW.contains(twoChar)) return Token(TokenType.ARROW, twoChar, null, lineNumber) to (start + 2)
+        if (TokenType.OPERATOR.contains(twoChar)) return Token(TokenType.OPERATOR, twoChar, null, lineNumber) to (start + 2)
     }
 
-    val one = source[start].toString()
-    val singleOps = setOf("+", "-", "*", "/", "%", "=", "<", ">", "!", "(", ")", "{", "}", "[", "]", ",", ";", ".")
-    if (one in singleOps) {
-        val type = when (one) {
-            ";" -> TokenType.SEMICOLON
-            "." -> TokenType.DOT
-            "(", ")", "{", "}", "[", "]", "," -> TokenType.DELIMITER
-            else -> TokenType.OPERATOR
-        }
-        return Token(type, one, line) to (start + 1)
+    // Check single-character operators or delimiters
+    val oneChar = source[start].toString()
+    return when {
+        TokenType.OPERATOR.contains(oneChar) -> Token(TokenType.OPERATOR, oneChar, null, lineNumber) to (start + 1)
+        TokenType.DELIMITER.contains(oneChar) -> Token(TokenType.DELIMITER, oneChar, null, lineNumber) to (start + 1)
+        TokenType.DOT.contains(oneChar) -> Token(TokenType.DOT, oneChar, null, lineNumber) to (start + 1)
+        TokenType.SEMICOLON.contains(oneChar) -> Token(TokenType.SEMICOLON, oneChar, null, lineNumber) to (start + 1)
+        else -> throw IllegalArgumentException("Unexpected character '$oneChar' at line $lineNumber")
     }
-
-    throw Exception("Unexpected character '$one' at line $line")
 }
 
-fun scanLine(source: String, line: Int): List<Token> {
+// main token scanner
+fun scanToken(source: String, start: Int, lineNumber: Int): Pair<Token, Int> {
+    val char = source[start]
+    return when {
+        char.isLetter() || char == '_' -> scanIdentifierOrKeyword(source, start, lineNumber)
+        char.isDigit() -> scanNumber(source, start, lineNumber)
+        char == '"' -> scanString(source, start, lineNumber)
+        else -> scanOperator(source, start, lineNumber)
+    }
+}
+
+// scan line
+fun scanLine(source: String, lineNumber: Int): List<Token> {
     val tokens = mutableListOf<Token>()
-    var i = 0
-    while (i < source.length) {
-        val c = source[i]
+    var index = 0
 
-        if (c.isWhitespace()) { i++; continue }
+    while (index < source.length) {
+        val char = source[index]
 
-        // comment check
-        if (c == ':' && i + 1 < source.length && source[i + 1] == '>') break
-        if (c == '/' && i + 1 < source.length && source[i + 1] == '*') {
-            i += 2
-            while (i < source.length && !(source[i] == '*' && i + 1 < source.length && source[i + 1] == '/')) i++
-            i += 2
+        // Skip whitespace
+        if (char.isWhitespace()) { index++; continue }
+
+        // Single-line comment
+        if (char == ':' && index + 1 < source.length && source[index + 1] == '>') break
+
+        // Multi-line comment
+        if (char == '/' && index + 1 < source.length && source[index + 1] == '*') {
+            index += 2
+            while (index < source.length && !(source[index] == '*' && index + 1 < source.length && source[index + 1] == '/')) index++
+            if (index + 1 >= source.length) throw IllegalArgumentException("Unterminated multi-line comment at line $lineNumber")
+            index += 2
             continue
         }
 
-        val (token, next) = when {
-            c.isLetter() || c == '_' -> scanWord(source, i, line)
-            c.isDigit() -> scanNumber(source, i, line)
-            c == '"' -> scanString(source, i, line)
-            else -> scanOperator(source, i, line)
-        }
+        val (token, nextIndex) = scanToken(source, index, lineNumber)
         tokens.add(token)
-        i = next
+        index = nextIndex
     }
-    tokens.add(Token(TokenType.EOF, "", line))
+
+    tokens.add(Token(TokenType.EOF, "", null, lineNumber))
     return tokens
 }
 
+//
 fun main() {
-    println("Enter code (exit to quit):")
+    println("Enter your code (type 'exit' to quit):")
     var lineNumber = 1
     while (true) {
         print("> ")
         val input = readLine() ?: break
         if (input.trim() == "exit") break
-
         try {
             val tokens = scanLine(input, lineNumber)
             tokens.forEach { println(it) }
-        } catch (e: Exception) {
-            println("Lexer error: ${e.message}")
+        } catch (e: IllegalArgumentException) {
+            println("Lexer error: ${e.message} (Line $lineNumber)")
         }
-
         lineNumber++
     }
+    println("Exiting lexer REPL.")
 }
