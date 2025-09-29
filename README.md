@@ -189,12 +189,16 @@ moveName = "Thunderbolt"
    ```
 5. Instance method chaining: Use -> for calling object methods.
    e.g.
+   ```
    encounter = myZone.pokemon->random();
-6. Use . for class property access.
+   ```
+7. Use . for class property access.
    e.g.
+   ```
    myZone = SafariZone(10,10);
    print(myZone.balls);
-7. Line breaks: Statements can be split across multiple lines for readability, but the semicolon must remain at the end.
+   ```
+9. Line breaks: Statements can be split across multiple lines for readability, but the semicolon must remain at the end.
 
 ## Sample Code
 ```
