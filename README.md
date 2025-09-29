@@ -1,34 +1,33 @@
-# PokeDSL
-[!PokeMO]
-**Creator**
+[PukiMO]
+CREATORS
 Del Rosario, Nina Claudia E.
 Hernia, Christian Joseph G.
 
 
-**Language Overview**
+LANGUAGE OVERVIEW
 PUKIMO Safari Zone Edition is a dynamically typed, Pokémon-themed domain-specific language (DSL) designed to simulate a Safari Zone adventure. Players explore the safari zone, encounter wild Pokémon, throw Safari Balls, and manage a temporary Safari team. Unlike the traditional Pokémon experience, this DSL emphasizes exploration, random encounters, and chance-based catching mechanics, creating a narrative, adventure-like experience.
 
 Main Characteristics:
-1. Simple object-oriented style with lightweight syntax.
-2. Built-in types for SafariZone, Team, and Pokemon.
-3. Declarative DSL-style commands (explore, throwBall, filter) for expressing game-like behavior.
-4. Support for attributes like nature, behavior, friendliness, and shiny.
-5. Human-readable syntax with comments (:>) for clarity and fun.
+    1. Simple object-oriented style with lightweight syntax.
+    2. Built-in types for SafariZone, Team, and Pokemon.
+    3. Declarative DSL-style commands (explore, throwBall, filter) for expressing game-like behavior.
+    4. Support for attributes like nature, behavior, friendliness, and shiny.
+    5. Human-readable syntax with comments (:>) for clarity and fun.
 
 
-**Keywords**
-- if: Introduces a conditional block. Executes code if a condition is true.
-- else: Defines the alternative branch of an if statement.
-- explore: Special loop construct for iterating over Safari Zone turns or balls.
-- run: Exits the current loop or exploration early.
-- define: Declares a user-defined function.
-- print: Outputs text or data to the console.
-- throwBall: Attempts to catch a Pokémon inside an encounter.
-- true: Boolean literal representing truth.
-- false: Boolean literal representing falsehood.
-- SafariZone: Built-in type for managing Safari Zone state (balls, turns, Pokémon).
-- Team: Built-in type for managing the player’s caught Pokémon.
-- Pokemon: Built-in type representing individual Pokémon entities.
+KEYWORDS
+  - if: Introduces a conditional block. Executes code if a condition is true.
+  - else: Defines the alternative branch of an if statement.
+  - explore: Special loop construct for iterating over Safari Zone turns or balls.
+  - run: Exits the current loop or exploration early.
+  - define: Declares a user-defined function.
+  - print: Outputs text or data to the console.
+  - throwBall: Attempts to catch a Pokémon inside an encounter.
+  - true: Boolean literal representing truth.
+  - false: Boolean literal representing falsehood.
+  - SafariZone: Built-in type for managing Safari Zone state (balls, turns, Pokémon).
+  - Team: Built-in type for managing the player’s caught Pokémon.
+  - Pokemon: Built-in type representing individual Pokémon entities.
 
 1. Built-in Properties & Methods
    These are predefined attributes and functions available on core objects (SafariZone, Team, Pokemon). They are not reserved words, but form part of the standard library.
@@ -74,7 +73,7 @@ Main Characteristics:
    filter(criteria) → filters Pokémon based on attributes (e.g., shiny=true, nature="Timid").
 
 
-**Operators**
+OPERATORS
 1. Arithmetic Operators
     + → addition or string concatenation.
     - → subtraction.
@@ -103,7 +102,7 @@ Main Characteristics:
    . → access a property of an object
 
 
-**Literals**
+LITERALS
 1. Numbers
    Only integers are supported (no floats or decimals).
    Used for counts, levels, turns, friendliness, etc.
@@ -140,7 +139,7 @@ Main Characteristics:
    myTeamList = ["Pikachu", "Bulbasaur", "Charmander"];
 
 
-**Identifiers**
+IDENTIFIERS
 Rules for valid identifiers:
 1. Must start with a letter (A-Z or a-z) or an underscore (_).
 2. Can contain letters, digits (0-9), and underscores (_).
@@ -158,7 +157,7 @@ pikachuLevel = 15
 BulbasaurStats = [100, 80, 90]
 moveName = "Thunderbolt"
 
-**Comments**
+COMMENTS
 1. :> - single line comments are written like this
    :> this is a comment
 2. /* - multi-line comments are written like this
@@ -167,7 +166,7 @@ moveName = "Thunderbolt"
 3. Nested comments are not supported
 
 
-**Syntax Style**
+SYNTAX STYLE
 1. Whitespace: Not significant, but indentation is recommended for readability.
 2. Statement termination: Semicolons ; are required at the end of every statement.
    e.g.
@@ -189,8 +188,8 @@ moveName = "Thunderbolt"
    print(myZone.balls);
 6. Line breaks: Statements can be split across multiple lines for readability, but the semicolon must remain at the end.
 
-**Sample Code**
-[Provide a few examples of valid code in your language to demonstrate the syntax and features]
+SAMPLE CODE
+
 :> Initialize Safari Zone with 10 Safari Balls and 20 turns
 myZone = SafariZone(10, 20);
 myTeam = Team();
@@ -223,10 +222,8 @@ else {
 pokemon.caught = false;
 print(pokemon + " escaped!");
 }
-
     :> Reduce Safari Balls automatically
     myZone.balls = myZone.balls - 1;
-
     :> Stop exploring if out of balls
     if myZone.balls == 0 {
         print("You're out of Safari Balls!");
@@ -238,7 +235,6 @@ print(pokemon + " escaped!");
 explore(myZone) {
 encounter = myZone.pokemon->random();
 print("A wild " + encounter + " appeared!");
-
     tryCatchEncounter(encounter);
 }
 
@@ -246,7 +242,6 @@ print("A wild " + encounter + " appeared!");
 explore(myZone.turns) {
 encounter = myZone.pokemon->random();
 print("A wild " + encounter + " appeared!");
-
     tryCatchEncounter(encounter);
 }
 
@@ -285,8 +280,7 @@ print(myZone.pokemon->filter(nature="Timid"));
 print("Filtering shiny Pokémon in team:");
 print(myTeam.pokemon->filter(shiny=true));
 
-**Design Rationale**
-[Explain the reasoning behind your design choices]
+DESIGN RATIONALE
 1. Single Trainer
     - The language assumes one implicit Trainer. This removes boilerplate and keeps code simple, like in the games (no need to declare a trainer each time).
 2. Pokémon-flavored literals and booleans
