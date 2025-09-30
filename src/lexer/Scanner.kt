@@ -1,7 +1,4 @@
 package lexer
-import lexer.Token
-import lexer.TokenType
-
 class Scanner {
 
     private var lineNumber: Int = 1
@@ -121,18 +118,14 @@ class Scanner {
     fun scanLine(source: String): List<Token> {
         val tokens = mutableListOf<Token>()
         var index = 0
-        var lastCharWasNewline = false
 
         while (index < source.length) {
             val char = source[index]
 
             if (char == '\n') {
                 lineNumber++
-                lastCharWasNewline = true
                 index++
                 continue
-            } else {
-                lastCharWasNewline = false
             }
 
             // Skip other whitespace

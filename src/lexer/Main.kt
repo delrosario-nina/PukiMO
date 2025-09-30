@@ -8,7 +8,7 @@ fun main() {
         while (true) {
             val line = readLine() ?: break
             if (line.trim() == "exit") break
-            append(line).append("\n") // preserve newlines for the scanner
+            append(line).append("\n")
         }
     }
 
