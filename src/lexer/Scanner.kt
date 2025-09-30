@@ -106,11 +106,21 @@ class Scanner() {
     fun scanLine(source: String): List<Token> {
         val tokens = mutableListOf<Token>()
         var index = 0
+        var lastCharWasNewline = false
 
         while (index < source.length) {
             val char = source[index]
 
-            // Skip whitespace
+            if (char == '\n') {
+                lineNumber++
+                lastCharWasNewline = true
+                index++
+                continue
+            } else {
+                lastCharWasNewline = false
+            }
+
+            // Skip other whitespace
             if (char.isWhitespace()) { index++; continue }
 
             // Single-line comment
@@ -119,8 +129,13 @@ class Scanner() {
             // Multi-line comment
             if (char == '/' && index + 1 < source.length && source[index + 1] == '*') {
                 index += 2
-                while (index < source.length && !(source[index] == '*' && index + 1 < source.length && source[index + 1] == '/')) index++
-                if (index + 1 >= source.length) throw IllegalArgumentException("Unterminated multi-line comment at line $this.lineNumber")
+                while (index < source.length &&
+                    !(source[index] == '*' && index + 1 < source.length && source[index + 1] == '/')) {
+                    if (source[index] == '\n') lineNumber++
+                    index++
+                }
+                if (index + 1 >= source.length)
+                    throw IllegalArgumentException("Unterminated multi-line comment at line $lineNumber")
                 index += 2
                 continue
             }
@@ -130,9 +145,12 @@ class Scanner() {
             index = nextIndex
         }
 
-        tokens.add(Token(TokenType.EOF, "", null, this.lineNumber))
-        return tokens
-    }
+        // increment lineNumber if the last character was not already a newline
+        if (!source.endsWith("\n")) lineNumber++
 
-//
-}
+        // EOF token now uses incremented lineNumber
+        tokens.add(Token(TokenType.EOF, "", null, lineNumber-1))
+
+        return tokens
+        }
+    }
