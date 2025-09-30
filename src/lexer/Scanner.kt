@@ -2,20 +2,33 @@ package lexer
 import lexer.Token
 import lexer.TokenType
 
-class Scanner() {
+class Scanner {
 
     private var lineNumber: Int = 1
+
+    // helper: check if a symbol belongs to a TokenType
     fun TokenType.contains(symbol: String): Boolean {
         return symbols?.contains(symbol) ?: false
     }
 
     //switch case for null, true, false, and keyword
     fun classifyWord(word: String): Pair<TokenType, Any?> {
-        return when {
-            word == "null" -> TokenType.LITERAL to null
-            word == "true" -> TokenType.LITERAL to true
-            word == "false" -> TokenType.LITERAL to false
-            TokenType.KEYWORD.contains(word) -> TokenType.KEYWORD to null
+        return when (word) {
+            "if" -> TokenType.IF_KEYWORD to null
+            "else" -> TokenType.ELSE_KEYWORD to null
+            "explore" -> TokenType.EXPLORE_KEYWORD to null
+            "run" -> TokenType.RUN_KEYWORD to null
+            "define" -> TokenType.DEFINE_KEYWORD to null
+            "print" -> TokenType.PRINT_KEYWORD to null
+            "throwBall" -> TokenType.THROWBALL_KEYWORD to null
+            "SafariZone" -> TokenType.SAFARIZONE_KEYWORD to null
+            "Team" -> TokenType.TEAM_KEYWORD to null
+            "const" -> TokenType.CONST_KEYWORD to null
+
+            "null" -> TokenType.NULL_LITERAL to null
+            "true" -> TokenType.TRUE_LITERAL to true
+            "false" -> TokenType.FALSE_LITERAL to false
+
             else -> TokenType.IDENTIFIER to null
         }
     }
@@ -34,7 +47,7 @@ class Scanner() {
         while (index < source.length && source[index].isDigit()) index++
         val lexeme = source.substring(start, index)
         val literal = lexeme.toIntOrNull()
-            ?: throw IllegalArgumentException("Unexpected character '$lexeme'")
+            ?: throw IllegalArgumentException("Unexpected number '$lexeme'")
         return Token(TokenType.LITERAL, lexeme, literal, this.lineNumber) to index
     }
 
@@ -46,7 +59,7 @@ class Scanner() {
             val char = source[index]
             if (char == '\n') {
                 lineNumber++
-                sb.append(char) // keep newline in string if needed
+                sb.append(char)
                 index++
                 continue
             }
@@ -57,7 +70,7 @@ class Scanner() {
                     't' -> '\t'
                     '\\' -> '\\'
                     '"' -> '"'
-                    else -> nextChar // unknown escape, keep literal
+                    else -> nextChar
                 }
                 sb.append(escaped)
                 index += 2
@@ -76,8 +89,10 @@ class Scanner() {
         // Check two-character operators first
         if (start + 1 < source.length) {
             val twoChar = source.substring(start, start + 2)
-            if (TokenType.ARROW.contains(twoChar)) return Token(TokenType.ARROW, twoChar, null, this.lineNumber) to (start + 2)
-            if (TokenType.OPERATOR.contains(twoChar)) return Token(TokenType.OPERATOR, twoChar, null, this.lineNumber) to (start + 2)
+            if (TokenType.ARROW.contains(twoChar))
+                return Token(TokenType.ARROW, twoChar, null, this.lineNumber) to (start + 2)
+            if (TokenType.OPERATOR.contains(twoChar))
+                return Token(TokenType.OPERATOR, twoChar, null, this.lineNumber) to (start + 2)
         }
 
         // Check single-character operators or delimiters
@@ -87,7 +102,7 @@ class Scanner() {
             TokenType.DELIMITER.contains(oneChar) -> Token(TokenType.DELIMITER, oneChar, null, this.lineNumber) to (start + 1)
             TokenType.DOT.contains(oneChar) -> Token(TokenType.DOT, oneChar, null, this.lineNumber) to (start + 1)
             TokenType.SEMICOLON.contains(oneChar) -> Token(TokenType.SEMICOLON, oneChar, null, this.lineNumber) to (start + 1)
-            else -> throw IllegalArgumentException("Unexpected character '$oneChar' at line $this.lineNumber")
+            else -> throw IllegalArgumentException("Unexpected character '$oneChar' at line $lineNumber")
         }
     }
 
