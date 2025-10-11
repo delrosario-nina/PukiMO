@@ -313,7 +313,7 @@ print(myTeam.pokemon->filter(shiny=true));
     - The syntax is designed to be easy to read for Pokémon fans, while also structured enough to be parsed like a real language.
 
 
-#Grammar
+# Grammar
 
 Program               --> StmtList
 
