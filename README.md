@@ -405,6 +405,7 @@ Expression            --> Assignment
 
 ### Primary Values
 **Primary**               --> IDENTIFIER
+                        | BUILTIN_CONSTRUCTOR_CALL
                         | NUMBER
                         | STRING
                         | "true"
@@ -412,6 +413,11 @@ Expression            --> Assignment
                         | "null"
                         | ArrayLiteral
                         | LPAREN Expression RPAREN
+
+
+**BUILTIN_CONSTRUCTOR_CALL** --> "SafariZone" LPAREN OptArgList RPAREN
+                           | "Team" LPAREN OptArgList RPAREN
+                           | "Pokemon" LPAREN OptArgList RPAREN
 
 **ArrayLiteral**          --> LBRACKET OptArrayElems RBRACKET
 
