@@ -316,19 +316,21 @@ print(myTeam.pokemon->filter(shiny=true));
 # Grammar
 
 ### Main Body
-Program               --> StmtList
+**Program**               --> StmtList
 
-StmtList              --> /* empty */
+**StmtList**              --> /* empty */
                         | Stmt StmtList
 
-Stmt                  --> NonIfStmt
+**Stmt**                  --> NonIfStmt
                         | IfStmt
+                        
 
 ### If statements 
-IfStmt                --> "if" Expression Block ElseOpt
+**IfStmt**                --> "if" Expression Block ElseOpt
 
-ElseOpt               --> "else" Stmt
+**ElseOpt**               --> "else" Stmt
                         | /* empty */
+                        
 
 ### Non-if Statements
 **NonIfStmt**             --> VarDeclStmt
@@ -399,6 +401,7 @@ Expression            --> Assignment
                         | DOT IDENTIFIER LPAREN OptArgList RPAREN  /* method call on dot */
                         | ARROW IDENTIFIER LPAREN OptArgList RPAREN /* method call on arrow */
                         | LPAREN OptArgList RPAREN           /* function call on identifier or expression result */
+                        
 
 ### Primary Values
 **Primary**               --> IDENTIFIER
@@ -417,7 +420,7 @@ Expression            --> Assignment
 
 **ArrayElems**            --> Expression ( COMMA Expression )*
 
-/* Argument lists for calls */
+### Argument List
 **OptArgList**            --> /* empty */
                         | ArgList
 
