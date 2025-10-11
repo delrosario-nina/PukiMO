@@ -312,3 +312,115 @@ print(myTeam.pokemon->filter(shiny=true));
 9. Focus on clarity and accessibility
     - The syntax is designed to be easy to read for Pokémon fans, while also structured enough to be parsed like a real language.
 
+
+#Grammar
+
+Program               --> StmtList
+
+StmtList              --> /* empty */
+                        | Stmt StmtList
+
+Stmt                  --> NonIfStmt
+                        | IfStmt
+
+/* ---- If statements: grammar forces "else" to attach to nearest if (unambiguous) ---- */
+IfStmt                --> "if" Expression Block ElseOpt
+
+ElseOpt               --> "else" Stmt
+                        | /* empty */
+
+/* Non-if statements */
+NonIfStmt             --> VarDeclStmt
+                        | ExprStmt
+                        | ExploreStmt
+                        | DefineStmt
+                        | PrintStmt
+                        | ThrowBallStmt
+                        | RunStmt
+                        | Block
+                        | SEMICOLON
+
+VarDeclStmt           --> IDENTIFIER ASSIGN Expression SEMICOLON
+
+ExprStmt              --> Expression SEMICOLON
+
+PrintStmt             --> "print" LPAREN Expression RPAREN SEMICOLON
+
+ThrowBallStmt         --> "throwBall" LPAREN Expression RPAREN SEMICOLON
+
+RunStmt               --> "run" SEMICOLON
+
+DefineStmt            --> "define" IDENTIFIER LPAREN OptParamList RPAREN Block
+
+OptParamList          --> /* empty */
+                        | ParamList
+
+ParamList             --> IDENTIFIER ( COMMA IDENTIFIER )*
+
+Block                 --> LBRACE StmtList RBRACE
+
+ExploreStmt           --> "explore" LPAREN Expression RPAREN Block
+                        | "explore" LPAREN IDENTIFIER RPAREN Block
+                        /* covers explore(myZone) and explore(myZone.turns) */
+
+/* -------------------- Expressions with precedence (unambiguous) -------------------- */
+
+Expression            --> Assignment
+
+/* Assignment is right-associative: a = b = c  => a = (b = c) */
+Assignment            --> OrExpr
+                        | LeftHandSide ASSIGN Assignment
+
+LeftHandSide          --> PrimaryWithSuffixes   /* variable or member/call chain that can be assigned to */
+
+/* Logical OR (left-assoc) */
+OrExpr                --> AndExpr ( OR AndExpr )*
+
+AndExpr               --> EqualityExpr ( AND EqualityExpr )*
+
+EqualityExpr          --> RelExpr ( ( "==" | "!=" ) RelExpr )*
+
+RelExpr               --> AddExpr ( ( "<" | ">" | "<=" | ">=" ) AddExpr )*
+
+AddExpr               --> MulExpr ( ( "+" | "-" ) MulExpr )*
+
+MulExpr               --> UnaryExpr ( ( "*" | "/" | "%" ) UnaryExpr )*
+
+UnaryExpr             --> ( "!" | "-" ) UnaryExpr
+                        | PostfixExpr
+
+/* Postfix / high-precedence: calls, property access, method chaining (left-assoc) */
+PostfixExpr           --> PrimaryWithSuffixes
+
+/* PrimaryWithSuffixes: primary then zero or more suffixes (call, .prop, .method(args), ->method(args)) */
+PrimaryWithSuffixes   --> Primary ( Suffix )*
+
+Suffix                --> DOT IDENTIFIER                     /* property access */
+                        | DOT IDENTIFIER LPAREN OptArgList RPAREN  /* method call on dot */
+                        | ARROW IDENTIFIER LPAREN OptArgList RPAREN /* method call on arrow */
+                        | LPAREN OptArgList RPAREN           /* function call on identifier or expression result */
+
+/* Primary values */
+Primary               --> IDENTIFIER
+                        | NUMBER
+                        | STRING
+                        | "true"
+                        | "false"
+                        | "null"
+                        | ArrayLiteral
+                        | LPAREN Expression RPAREN
+
+ArrayLiteral          --> LBRACKET OptArrayElems RBRACKET
+
+OptArrayElems         --> /* empty */
+                        | ArrayElems
+
+ArrayElems            --> Expression ( COMMA Expression )*
+
+/* Argument lists for calls */
+OptArgList            --> /* empty */
+                        | ArgList
+
+ArgList               --> Expression ( COMMA Expression )*
+
+
