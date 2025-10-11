@@ -315,6 +315,7 @@ print(myTeam.pokemon->filter(shiny=true));
 
 # Grammar
 
+### Main Body
 Program               --> StmtList
 
 StmtList              --> /* empty */
@@ -323,14 +324,14 @@ StmtList              --> /* empty */
 Stmt                  --> NonIfStmt
                         | IfStmt
 
-/* ---- If statements: grammar forces "else" to attach to nearest if (unambiguous) ---- */
+### If statements 
 IfStmt                --> "if" Expression Block ElseOpt
 
 ElseOpt               --> "else" Stmt
                         | /* empty */
 
-/* Non-if statements */
-NonIfStmt             --> VarDeclStmt
+### Non-if Statements
+**NonIfStmt**             --> VarDeclStmt
                         | ExprStmt
                         | ExploreStmt
                         | DefineStmt
@@ -340,68 +341,67 @@ NonIfStmt             --> VarDeclStmt
                         | Block
                         | SEMICOLON
 
-VarDeclStmt           --> IDENTIFIER ASSIGN Expression SEMICOLON
+**VarDeclStmt**           --> IDENTIFIER ASSIGN Expression SEMICOLON
 
-ExprStmt              --> Expression SEMICOLON
+**ExprStmt**              --> Expression SEMICOLON
 
-PrintStmt             --> "print" LPAREN Expression RPAREN SEMICOLON
+**PrintStmt**             --> "print" LPAREN Expression RPAREN SEMICOLON
 
-ThrowBallStmt         --> "throwBall" LPAREN Expression RPAREN SEMICOLON
+**ThrowBallStmt**         --> "throwBall" LPAREN Expression RPAREN SEMICOLON
 
-RunStmt               --> "run" SEMICOLON
+**RunStmt**               --> "run" SEMICOLON
 
-DefineStmt            --> "define" IDENTIFIER LPAREN OptParamList RPAREN Block
+**DefineStmt**            --> "define" IDENTIFIER LPAREN OptParamList RPAREN Block
 
-OptParamList          --> /* empty */
+**OptParamList**          --> /* empty */
                         | ParamList
 
-ParamList             --> IDENTIFIER ( COMMA IDENTIFIER )*
+**ParamList**             --> IDENTIFIER ( COMMA IDENTIFIER )*
 
-Block                 --> LBRACE StmtList RBRACE
+**Block**                 --> LBRACE StmtList RBRACE
 
-ExploreStmt           --> "explore" LPAREN Expression RPAREN Block
+**ExploreStmt**           --> "explore" LPAREN Expression RPAREN Block
                         | "explore" LPAREN IDENTIFIER RPAREN Block
                         /* covers explore(myZone) and explore(myZone.turns) */
 
-/* -------------------- Expressions with precedence (unambiguous) -------------------- */
 
+### Precedence
 Expression            --> Assignment
 
-/* Assignment is right-associative: a = b = c  => a = (b = c) */
-Assignment            --> OrExpr
+#### Assignment is right-associative: a = b = c  => a = (b = c)
+**Assignment**            --> OrExpr
                         | LeftHandSide ASSIGN Assignment
 
-LeftHandSide          --> PrimaryWithSuffixes   /* variable or member/call chain that can be assigned to */
+**LeftHandSide**          --> PrimaryWithSuffixes   /* variable or member/call chain that can be assigned to */
 
-/* Logical OR (left-assoc) */
-OrExpr                --> AndExpr ( OR AndExpr )*
+**OrExpr**                --> AndExpr ( OR AndExpr )*
 
-AndExpr               --> EqualityExpr ( AND EqualityExpr )*
+**AndExpr**               --> EqualityExpr ( AND EqualityExpr )*
 
-EqualityExpr          --> RelExpr ( ( "==" | "!=" ) RelExpr )*
+**EqualityExpr**          --> RelExpr ( ( "==" | "!=" ) RelExpr )*
 
-RelExpr               --> AddExpr ( ( "<" | ">" | "<=" | ">=" ) AddExpr )*
+**RelExpr**               --> AddExpr ( ( "<" | ">" | "<=" | ">=" ) AddExpr )*
 
-AddExpr               --> MulExpr ( ( "+" | "-" ) MulExpr )*
+**AddExpr**               --> MulExpr ( ( "+" | "-" ) MulExpr )*
 
-MulExpr               --> UnaryExpr ( ( "*" | "/" | "%" ) UnaryExpr )*
+**MulExpr**               --> UnaryExpr ( ( "*" | "/" | "%" ) UnaryExpr )*
 
-UnaryExpr             --> ( "!" | "-" ) UnaryExpr
+**UnaryExpr**             --> ( "!" | "-" ) UnaryExpr
                         | PostfixExpr
 
 /* Postfix / high-precedence: calls, property access, method chaining (left-assoc) */
-PostfixExpr           --> PrimaryWithSuffixes
+**PostfixExpr**           --> PrimaryWithSuffixes
 
 /* PrimaryWithSuffixes: primary then zero or more suffixes (call, .prop, .method(args), ->method(args)) */
-PrimaryWithSuffixes   --> Primary ( Suffix )*
+**PrimaryWithSuffixes**   --> Primary ( Suffix )*
 
-Suffix                --> DOT IDENTIFIER                     /* property access */
+**Suffix**                --> DOT IDENTIFIER                     /* property access */
                         | DOT IDENTIFIER LPAREN OptArgList RPAREN  /* method call on dot */
                         | ARROW IDENTIFIER LPAREN OptArgList RPAREN /* method call on arrow */
                         | LPAREN OptArgList RPAREN           /* function call on identifier or expression result */
 
-/* Primary values */
-Primary               --> IDENTIFIER
+### Primary Values
+**Primary**               --> IDENTIFIER
                         | NUMBER
                         | STRING
                         | "true"
@@ -410,17 +410,17 @@ Primary               --> IDENTIFIER
                         | ArrayLiteral
                         | LPAREN Expression RPAREN
 
-ArrayLiteral          --> LBRACKET OptArrayElems RBRACKET
+**ArrayLiteral**          --> LBRACKET OptArrayElems RBRACKET
 
-OptArrayElems         --> /* empty */
+**OptArrayElems**         --> /* empty */
                         | ArrayElems
 
-ArrayElems            --> Expression ( COMMA Expression )*
+**ArrayElems**            --> Expression ( COMMA Expression )*
 
 /* Argument lists for calls */
-OptArgList            --> /* empty */
+**OptArgList**            --> /* empty */
                         | ArgList
 
-ArgList               --> Expression ( COMMA Expression )*
+**ArgList**               --> Expression ( COMMA Expression )*
 
 
