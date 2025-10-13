@@ -318,91 +318,84 @@ print(myTeam.pokemon->filter(shiny=true));
 ### Main Body
 **Program**               --> StmtList
 
-**StmtList**              --> /* empty */
-                        | Stmt StmtList
+**StmtList**              --> e | Stmt StmtList
 
-**Stmt**                  --> NonIfStmt
-                        | IfStmt
+**Stmt**                  --> NonIfStmt | IfStmt
                         
 
 ### If statements 
 **IfStmt**                --> "if" Expression Block ElseOpt
 
-**ElseOpt**               --> "else" Stmt
-                        | /* empty */
+**ElseOpt**               --> "else" Block | e
                         
 
 ### Non-if Statements
 **NonIfStmt**             --> VarDeclStmt
-                        | ExprStmt
-                        | ExploreStmt
-                        | DefineStmt
-                        | PrintStmt
-                        | ThrowBallStmt
-                        | RunStmt
-                        | Block
-                        | SEMICOLON
+                           | ExprStmt
+                           | ExploreStmt
+                           | DefineStmt
+                           | PrintStmt
+                           | ThrowBallStmt
+                           | CatchStmt
+                           | RunStmt
+                           | Block
+                           | ";"
 
-**VarDeclStmt**           --> IDENTIFIER ASSIGN Expression SEMICOLON
+**VarDeclStmt**           --> IDENTIFIER "=" Expression ";"
 
-**ExprStmt**              --> Expression SEMICOLON
+**ExprStmt**              --> Expression ";" 
 
-**PrintStmt**             --> "print" LPAREN Expression RPAREN SEMICOLON
+**PrintStmt**             --> "print" Expression ";"
 
-**ThrowBallStmt**         --> "throwBall" LPAREN Expression RPAREN SEMICOLON
+**ThrowBallStmt**         --> "throwBall" "(" Expression ")" ";"
 
-**RunStmt**               --> "run" SEMICOLON
+**RunStmt**               --> "run" ";"
 
-**DefineStmt**            --> "define" IDENTIFIER LPAREN OptParamList RPAREN Block
+**DefineStmt**            --> "define" IDENTIFIER "(" OptParamList ")" Block
 
-**OptParamList**          --> /* empty */
-                        | ParamList
+**OptParamList**          --> e | ParamList
 
-**ParamList**             --> IDENTIFIER ( COMMA IDENTIFIER )*
+**ParamList**             --> IDENTIFIER { "," IDENTIFIER }
 
-**Block**                 --> LBRACE StmtList RBRACE
+**Block**                 --> "{ StmtList "}"
 
-**ExploreStmt**           --> "explore" LPAREN Expression RPAREN Block
-                        | "explore" LPAREN IDENTIFIER RPAREN Block
-                        /* covers explore(myZone) and explore(myZone.turns) */
-
+**ExploreStmt**           --> "explore" "(" Expression ")" Block
+                        | "explore" "(" IDENTIFIER ")" Block
+                        | "explore" Block
 
 ### Precedence
 Expression            --> Assignment
 
 #### Assignment is right-associative: a = b = c  => a = (b = c)
-**Assignment**            --> OrExpr
-                        | LeftHandSide ASSIGN Assignment
+**Assignment**            --> OrExpr | LeftHandSide "=" Assignment
 
-**LeftHandSide**          --> PrimaryWithSuffixes   /* variable or member/call chain that can be assigned to */
+**LeftHandSide**          --> PrimaryWithSuffixes  
 
-**OrExpr**                --> AndExpr ( OR AndExpr )*
+**OrExpr**                --> AndExpr { "||" AndExpr }
 
-**AndExpr**               --> EqualityExpr ( AND EqualityExpr )*
+**AndExpr**               --> EqualityExpr { "&&" EqualityExpr }
 
-**EqualityExpr**          --> RelExpr ( ( "==" | "!=" ) RelExpr )*
+**EqualityExpr**          --> RelExpr { ( "==" | "!=" ) RelExpr }
 
-**RelExpr**               --> AddExpr ( ( "<" | ">" | "<=" | ">=" ) AddExpr )*
+**RelExpr**               --> AddExpr { ( "<" | ">" | "<=" | ">=" ) AddExpr }
 
-**AddExpr**               --> MulExpr ( ( "+" | "-" ) MulExpr )*
+**AddExpr**               --> MulExpr { ( "+" | "-" ) MulExpr }
 
-**MulExpr**               --> UnaryExpr ( ( "*" | "/" | "%" ) UnaryExpr )*
+**MulExpr**               --> UnaryExpr { ( "*" | "/" | "%" ) UnaryExpr }
 
-**UnaryExpr**             --> ( "!" | "-" ) UnaryExpr
-                        | PostfixExpr
+**UnaryExpr**             --> ( "!" | "-" ) UnaryExpr | PostfixExpr
 
 /* Postfix / high-precedence: calls, property access, method chaining (left-assoc) */
 **PostfixExpr**           --> PrimaryWithSuffixes
 
 /* PrimaryWithSuffixes: primary then zero or more suffixes (call, .prop, .method(args), ->method(args)) */
-**PrimaryWithSuffixes**   --> Primary ( Suffix )*
+**PrimaryWithSuffixes**   --> Primary { Suffix } 
 
-**Suffix**                --> DOT IDENTIFIER                     /* property access */
-                        | DOT IDENTIFIER LPAREN OptArgList RPAREN  /* method call on dot */
-                        | ARROW IDENTIFIER LPAREN OptArgList RPAREN /* method call on arrow */
-                        | LPAREN OptArgList RPAREN           /* function call on identifier or expression result */
+**Suffix**                --> "." IDENTIFIER                    
+                        | "." IDENTIFIER "(" OptArgList ")" 
+                        | "->" IDENTIFIER "(" OptArgList ")" 
+                        | "(" OptArgList ")"          
                         
-
 ### Primary Values
 **Primary**               --> IDENTIFIER
                         | BUILTIN_CONSTRUCTOR_CALL
@@ -412,24 +405,22 @@ Expression            --> Assignment
                         | "false"
                         | "null"
                         | ArrayLiteral
-                        | LPAREN Expression RPAREN
+                        | "(" Expression ")"
 
 
-**BUILTIN_CONSTRUCTOR_CALL** --> "SafariZone" LPAREN OptArgList RPAREN
-                           | "Team" LPAREN OptArgList RPAREN
-                           | "Pokemon" LPAREN OptArgList RPAREN
+**BUILTIN_CONSTRUCTOR_CALL** --> "SafariZone"  "(" OptArgList ")"   
+                           | "Team"  "(" OptArgList ")"   
+                           | "Pokemon"  "(" OptArgList ")"   
 
-**ArrayLiteral**          --> LBRACKET OptArrayElems RBRACKET
+**ArrayLiteral**          --> "[" OptArrayElems "]"
 
-**OptArrayElems**         --> /* empty */
-                        | ArrayElems
+**OptArrayElems**         --> e | ArrayElems
 
-**ArrayElems**            --> Expression ( COMMA Expression )*
+**ArrayElems**            --> Expression { "," Expression }
 
 ### Argument List
-**OptArgList**            --> /* empty */
-                        | ArgList
+**OptArgList**            --> e | ArgList
 
-**ArgList**               --> Expression ( COMMA Expression )*
+**ArgList**               --> Expression { "," Expression }
 
 
