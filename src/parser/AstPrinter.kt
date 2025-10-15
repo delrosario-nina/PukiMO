@@ -4,7 +4,10 @@ class AstPrinter {
     fun print(node: AstNode): String = when (node) {
         is Program -> node.statements.joinToString("\n") { print(it) }
         is VarDeclStmt -> "(var ${node.name.lexeme} = ${print(node.value)})"
-        is DefineStmt -> "(define ${node.name.lexeme} = ${print(node.value)})"
+        is DefineStmt -> {
+            val params = node.params.joinToString(", ") { it.lexeme }
+            "(define ${node.name.lexeme}($params) ${print(node.body)})"
+        }
         is PrintStmt -> "(print ${print(node.expr)})"
         is ExprStmt -> print(node.expr)
         is IfStmt -> {
@@ -14,14 +17,23 @@ class AstPrinter {
             "(if $cond then $thenB${if (elseB.isNotEmpty()) " else $elseB" else ""})"
         }
         is Block -> node.stmts.joinToString(" ") { print(it) }
-        is RunStmt -> "(run ${node.token.lexeme})"
-        is ExploreStmt -> "(explore ${node.token.lexeme})"
-        is ThrowBallStmt -> "(throw ${print(node.target)})"
+        is RunStmt -> "(${node.token.lexeme})"
+        is ExploreStmt -> "(explore ${print(node.target)} ${print(node.block)})"
+        is ThrowBallStmt -> "throwBall (${print(node.target)})"
         is BinaryExpr -> parenthesize(node.operator.lexeme, node.left, node.right)
         is UnaryExpr -> parenthesize(node.operator.lexeme, node.right)
         is LiteralExpr -> node.value?.toString() ?: "null"
         is VariableExpr -> node.name.lexeme
         is AssignExpr -> "(= ${print(node.target)} ${print(node.value)})"
+        is PropertyAccessExpr -> "(${print(node.obj)}.${node.member.lexeme})" // dot remains property
+        is CallExpr -> {
+            val args = node.args.joinToString(", ") { print(it) }
+            // If callee is PropertyAccessExpr and represents a method call, show -> instead of nested ()
+            when (node.callee) {
+                is PropertyAccessExpr -> "(${print(node.callee.obj)}->${node.callee.member.lexeme}($args))"
+                else -> "(${print(node.callee)}($args))"
+            }
+        }
         else -> "unknown"
     }
 
