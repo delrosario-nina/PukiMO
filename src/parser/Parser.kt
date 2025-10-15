@@ -114,8 +114,7 @@ class Parser(private val tokens: List<Token>) {
     // ----------------------
     // EXPRESSION PARSING
     // ----------------------
-    private fun parseExpression(): Expr {var expr =parseAssignment()
-    return expr}
+    private fun parseExpression(): Expr {return parseAssignment()}
 
     private fun parseAssignment(): Expr {
         val expr = parseOr()
@@ -245,13 +244,13 @@ class Parser(private val tokens: List<Token>) {
 
     private fun error(token: Token, message: String): Exception =
         Exception("[line ${token.lineNumber}] Error at '${token.lexeme}': $message")
-}
 
-
-fun parseSingleExpr(): Expr? {
-    return try {
-        parseExpression()
-    } catch (e: Exception) {
-        null
+    fun parseSingleExpr(): Expr? {
+        return try {
+            parseExpression()
+        } catch (e: Exception) {
+            null
+        }
     }
 }
+
