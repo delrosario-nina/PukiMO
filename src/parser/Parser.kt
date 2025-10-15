@@ -1,281 +1,220 @@
 package parser
 
-import lexer.Token
-import lexer.TokenType.*
-import parser.Expr
-import parser.Stmt
+import lexer.*
 
+sealed class AstNode
 
+data class Program(val statements: List<Stmt>) : AstNode()
+
+// ----------------------
+// STATEMENTS
+// ----------------------
+sealed class Stmt : AstNode()
+data class VarDeclStmt(val name: Token, val value: Expr) : Stmt()
+data class ExprStmt(val expr: Expr) : Stmt()
+data class PrintStmt(val expr: Expr) : Stmt()
+data class IfStmt(val condition: Expr, val thenBlock: Block, val elseBlock: Block?) : Stmt()
+data class Block(val stmts: List<Stmt>) : Stmt()
+data class RunStmt(val token: Token) : Stmt()
+data class ExploreStmt(val token: Token) : Stmt()
+data class DefineStmt(val name: Token, val value: Expr) : Stmt()
+data class ThrowBallStmt(val target: Expr) : Stmt()
+
+// ----------------------
+// EXPRESSIONS
+// ----------------------
+sealed class Expr : AstNode()
+data class BinaryExpr(val left: Expr, val operator: Token, val right: Expr) : Expr()
+data class UnaryExpr(val operator: Token, val right: Expr) : Expr()
+data class LiteralExpr(val value: Any?) : Expr()
+data class VariableExpr(val name: Token) : Expr()
+data class AssignExpr(val target: Expr, val equals: Token, val value: Expr) : Expr()
+
+// ----------------------
+// PARSER CLASS
+// ----------------------
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
-    // --------------------
-    // ENTRY POINT
-    // --------------------
-    fun parse(): List<Stmt> {
-        val statements = mutableListOf<Stmt>()
+    fun parse(): Program {
+        val stmts = mutableListOf<Stmt>()
         while (!isAtEnd()) {
-            statements.add(declaration())
+            stmts.add(parseStmt())
         }
-        return statements
+        return Program(stmts)
     }
 
-    // --------------------
-    // DECLARATIONS / STATEMENTS
-    // --------------------
-    private fun declaration(): Stmt {
+    // ----------------------
+    // STATEMENT PARSING
+    // ----------------------
+    private fun parseStmt(): Stmt {
         return when {
-            match(DEFINE_KEYWORD) -> defineStatement()
-            match(EXPLORE_KEYWORD) -> exploreStatement()
-            else -> statement()
+            match(TokenType.IF_KEYWORD) -> parseIfStmt()
+            match(TokenType.PRINT_KEYWORD) -> parsePrintStmt()
+            match(TokenType.RUN_KEYWORD) -> RunStmt(previous())
+            match(TokenType.EXPLORE_KEYWORD) -> ExploreStmt(previous())
+            match(TokenType.THROWBALL_KEYWORD) -> parseThrowBallStmt()
+            match(TokenType.DEFINE_KEYWORD) -> parseDefineStmt()
+            check(TokenType.IDENTIFIER) && peekNext().type == TokenType.ASSIGN -> parseVarDeclStmt()
+            match(TokenType.LEFT_BRACE) -> parseBlock()
+            else -> parseExprStmt()
         }
     }
 
-    private fun statement(): Stmt {
-        return when {
-            match(IF_KEYWORD) -> ifStatement()
-            match(THROWBALL_KEYWORD) -> throwBallStatement()
-            match(RUN_KEYWORD) -> runStatement()
-            checkArrowCatch() -> catchStatement()
-            match(PRINT_KEYWORD) -> printStatement()
-            match(LEFT_BRACE) -> Stmt.Block(block())
-            else -> expressionStatement()
-        }
+    private fun parseIfStmt(): Stmt {
+        val condition = parseExpression()
+        val thenBlock = parseBlock()
+        val elseBlock = if (match(TokenType.ELSE_KEYWORD)) parseBlock() else null
+        return IfStmt(condition, thenBlock, elseBlock)
     }
 
-    private fun defineStatement(): Stmt {
-        val name = consume(TokenType.IDENTIFIER, "Expect function name after 'define'.")
-        consume(TokenType.LEFT_PAREN, "Expect '(' after function name.")
-        val parameters = mutableListOf<Token>()
-        if (!check(TokenType.RIGHT_PAREN)) {
-            do {
-                parameters.add(consume(TokenType.IDENTIFIER, "Expect parameter name."))
-            } while (match(TokenType.COMMA))
-        }
-        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
-        consume(TokenType.LEFT_BRACE, "Expect '{' before function body.")
-        val body = block()
-        return Stmt.Define(name, parameters, body)
+    private fun parseVarDeclStmt(): Stmt {
+        val name = consume(TokenType.IDENTIFIER, "Expected variable name.")
+        consume(TokenType.ASSIGN, "Expected '=' after variable name.")
+        val expr = parseExpression()
+        consume(TokenType.SEMICOLON, "Expected ';' after variable declaration.")
+        return VarDeclStmt(name, expr)
     }
 
-    private fun ifStatement(): Stmt {
-        consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
-        val condition = expression()
-        consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
-        val thenBranch = statement()
-        var elseBranch: Stmt? = null
-        if (match(TokenType.ELSE)) {
-            elseBranch = statement()
-        }
-        return Stmt.If(condition, thenBranch, elseBranch)
+    private fun parseDefineStmt(): Stmt {
+        val name = consume(TokenType.IDENTIFIER, "Expected name after 'define'.")
+        consume(TokenType.ASSIGN, "Expected '=' after name.")
+        val expr = parseExpression()
+        consume(TokenType.SEMICOLON, "Expected ';' after definition.")
+        return DefineStmt(name, expr)
     }
 
-    private fun checkArrowCatch(): Boolean {
-        return match(TokenType.ARROW)
+    private fun parseThrowBallStmt(): Stmt {
+        val target = parseExpression()
+        consume(TokenType.SEMICOLON, "Expected ';' after 'throw ball' statement.")
+        return ThrowBallStmt(target)
     }
 
-    private fun block(): List<Stmt> {
-        val statements = mutableListOf<Stmt>()
+    private fun parsePrintStmt(): Stmt {
+        val expr = parseExpression()
+        consume(TokenType.SEMICOLON, "Expected ';' after print expression.")
+        return PrintStmt(expr)
+    }
+
+    private fun parseExprStmt(): Stmt {
+        val expr = parseExpression()
+        consume(TokenType.SEMICOLON, "Expected ';' after expression.")
+        return ExprStmt(expr)
+    }
+
+    private fun parseBlock(): Block {
+        val stmts = mutableListOf<Stmt>()
         while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
-            statements.add(statement())
+            stmts.add(parseStmt())
         }
-        consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
-        return statements
+        consume(TokenType.RIGHT_BRACE, "Expected '}' after block.")
+        return Block(stmts)
     }
 
-    private fun argumentList(): List<Expr> {
-        val args = mutableListOf<Expr>()
-        if (!check(TokenType.RIGHT_PAREN)) {
-            do {
-                args.add(expression())
-            } while (match(TokenType.COMMA))
-        }
-        consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
-        return args
-    }
+    // ----------------------
+    // EXPRESSION PARSING
+    // ----------------------
+    private fun parseExpression(): Expr {var expr =parseAssignment()
+    return expr}
 
-
-    // --------------------
-    // POKÉMON-SPECIFIC STATEMENTS
-    // --------------------
-    private fun exploreStatement(): Stmt {
-        val expr = if (match(LEFT_PAREN)) {
-            val expression = expression()
-            consume(RIGHT_PAREN, "Expect ')' after explore expression.")
-            expression
-        } else null
-        val body = Stmt.Block(block())
-        return Stmt.Explore(expr, body)
-    }
-
-    private fun throwBallStatement(): Stmt {
-        consume(LEFT_PAREN, "Expect '(' after throwBall.")
-        val args = argumentList()
-        consume(RIGHT_PAREN, "Expect ')' after throwBall args.")
-        consume(SEMICOLON, "Expect ';' after throwBall().")
-        return Stmt.ThrowBall(args)
-    }
-
-    private fun runStatement(): Stmt {
-        consume(SEMICOLON, "Expect ';' after run.")
-        return Stmt.Run()
-    }
-
-    private fun catchStatement(): Stmt {
-        val left = expression()
-        consume(ARROW, "Expect '->' in catch statement.")
-        val method = consume(IDENTIFIER, "Expect 'catch' after '->'.")
-        consume(SEMICOLON, "Expect ';' after catch statement.")
-        return Stmt.Catch(left, method)
-    }
-
-    private fun printStatement(): Stmt {
-        consume(LEFT_PAREN, "Expect '(' after print.")
-        val value = expression()
-        consume(RIGHT_PAREN, "Expect ')' after print value.")
-        consume(SEMICOLON, "Expect ';' after print.")
-        return Stmt.Print(value)
-    }
-
-    private fun expressionStatement(): Stmt {
-        val expr = expression()
-        consume(SEMICOLON, "Expect ';' after expression.")
-        return Stmt.Expression(expr)
-    }
-
-    // --------------------
-    // EXPRESSIONS
-    // --------------------
-    private fun expression(): Expr = assignment()
-
-    private fun assignment(): Expr {
-        val expr = or()
-        if (match(ASSIGN)) {
+    private fun parseAssignment(): Expr {
+        val expr = parseOr()
+        if (match(TokenType.ASSIGN)) {
             val equals = previous()
-            val value = assignment()
-            if (expr is Expr.Variable) {
-                val name = expr.name
-                return Expr.Assign(name, value)
+            val value = parseAssignment()
+            if (expr is VariableExpr) {
+                return AssignExpr(expr, equals, value)
             }
             throw error(equals, "Invalid assignment target.")
         }
         return expr
     }
 
-    private fun or(): Expr {
-        var expr = and()
-        while (match(OR)) {
-            val operator = previous()
-            val right = and()
-            expr = Expr.Logical(expr, operator, right)
+    private fun parseOr(): Expr {
+        var expr = parseAnd()
+        while (match(TokenType.OR)) {
+            val op = previous()
+            val right = parseAnd()
+            expr = BinaryExpr(expr, op, right)
         }
         return expr
     }
 
-    private fun and(): Expr {
-        var expr = equality()
-        while (match(AND)) {
-            val operator = previous()
-            val right = equality()
-            expr = Expr.Logical(expr, operator, right)
+    private fun parseAnd(): Expr {
+        var expr = parseEquality()
+        while (match(TokenType.AND)) {
+            val op = previous()
+            val right = parseEquality()
+            expr = BinaryExpr(expr, op, right)
         }
         return expr
     }
 
-    private fun equality(): Expr {
-        var expr = comparison()
-        while (match(EQUAL_EQUAL, NOT_EQUAL)) {
-            val operator = previous()
-            val right = comparison()
-            expr = Expr.Binary(expr, operator, right)
+    private fun parseEquality(): Expr {
+        var expr = parseRelational()
+        while (match(TokenType.EQUAL_EQUAL, TokenType.NOT_EQUAL)) {
+            val op = previous()
+            val right = parseRelational()
+            expr = BinaryExpr(expr, op, right)
         }
         return expr
     }
 
-    private fun comparison(): Expr {
-        var expr = term()
-        while (match(LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL)) {
-            val operator = previous()
-            val right = term()
-            expr = Expr.Binary(expr, operator, right)
+    private fun parseRelational(): Expr {
+        var expr = parseAdditive()
+        while (match(TokenType.LESS_THAN, TokenType.LESS_EQUAL, TokenType.GREATER_THAN, TokenType.GREATER_EQUAL)) {
+            val op = previous()
+            val right = parseAdditive()
+            expr = BinaryExpr(expr, op, right)
         }
         return expr
     }
 
-    private fun term(): Expr {
-        var expr = factor()
-        while (match(PLUS, MINUS)) {
-            val operator = previous()
-            val right = factor()
-            expr = Expr.Binary(expr, operator, right)
+    private fun parseAdditive(): Expr {
+        var expr = parseMultiplicative()
+        while (match(TokenType.PLUS, TokenType.MINUS)) {
+            val op = previous()
+            val right = parseMultiplicative()
+            expr = BinaryExpr(expr, op, right)
         }
         return expr
     }
 
-    private fun factor(): Expr {
-        var expr = unary()
-        while (match(MULTIPLY, DIVIDE, MODULO)) {
-            val operator = previous()
-            val right = unary()
-            expr = Expr.Binary(expr, operator, right)
+    private fun parseMultiplicative(): Expr {
+        var expr = parseUnary()
+        while (match(TokenType.MULTIPLY, TokenType.DIVIDE, TokenType.MODULO)) {
+            val op = previous()
+            val right = parseUnary()
+            expr = BinaryExpr(expr, op, right)
         }
         return expr
     }
 
-    private fun unary(): Expr {
-        if (match(NOT, MINUS)) {
-            val operator = previous()
-            val right = unary()
-            return Expr.Unary(operator, right)
-        }
-        return call()
+    private fun parseUnary(): Expr {
+        return if (match(TokenType.NOT, TokenType.MINUS)) {
+            val op = previous()
+            val right = parseUnary()
+            UnaryExpr(op, right)
+        } else parsePrimary()
     }
 
-    private fun call(): Expr {
-        var expr = primary()
-        while (true) {
-            when {
-                match(LEFT_PAREN) -> {
-                    val args = argumentList()
-                    consume(RIGHT_PAREN, "Expect ')' after arguments.")
-                    expr = Expr.Call(expr, args)
-                }
-                match(DOT) -> {
-                    val name = consume(IDENTIFIER, "Expect property name after '.'.")
-                    expr = Expr.Get(expr, name)
-                }
-                match(ARROW) -> {
-                    val method = consume(IDENTIFIER, "Expect method name after '->'.")
-                    consume(LEFT_PAREN, "Expect '(' after arrow method name.")
-                    val args = argumentList()
-                    consume(RIGHT_PAREN, "Expect ')' after arrow call.")
-                    expr = Expr.ArrowCall(expr, method, args)
-                }
-                else -> break
-            }
-        }
-        return expr
-    }
-
-    private fun primary(): Expr {
+    private fun parsePrimary(): Expr {
         return when {
-            match(TRUE_LITERAL) -> Expr.Literal(true)
-            match(FALSE_LITERAL) -> Expr.Literal(false)
-            match(NULL_LITERAL) -> Expr.Literal(null)
-            match(NUMERIC_LITERAL, STRING_LITERAL) -> Expr.Literal(previous().literal)
-            match(IDENTIFIER) -> Expr.Variable(previous())
-            match(LEFT_PAREN) -> {
-                val expr = expression()
-                consume(RIGHT_PAREN, "Expect ')' after expression.")
-                Expr.Grouping(expr)
+            match(TokenType.NUMERIC_LITERAL, TokenType.STRING_LITERAL, TokenType.BOOLEAN_LITERAL, TokenType.NULL_LITERAL)
+                -> LiteralExpr(previous().literal)
+            match(TokenType.IDENTIFIER) -> VariableExpr(previous())
+            match(TokenType.LEFT_PAREN) -> {
+                val expr = parseExpression()
+                consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.")
+                expr
             }
-            else -> throw error(peek(), "Expect expression.")
+            else -> throw error(peek(), "Expected expression.")
         }
     }
 
-    // --------------------
-    // HELPERS
-    // --------------------
+    // ----------------------
+    // UTILITY FUNCTIONS
+    // ----------------------
     private fun match(vararg types: TokenType): Boolean {
         for (type in types) {
             if (check(type)) {
@@ -286,27 +225,33 @@ class Parser(private val tokens: List<Token>) {
         return false
     }
 
+    private fun consume(type: TokenType, message: String): Token {
+        if (check(type)) return advance()
+        throw error(peek(), message)
+    }
+
     private fun check(type: TokenType): Boolean =
-        if (isAtEnd()) false else peek().type == type
+        !isAtEnd() && peek().type == type
 
     private fun advance(): Token {
         if (!isAtEnd()) current++
         return previous()
     }
 
-    private fun isAtEnd() = peek().type == EOF
+    private fun isAtEnd(): Boolean = peek().type == TokenType.EOF
     private fun peek(): Token = tokens[current]
+    private fun peekNext(): Token = tokens.getOrElse(current + 1) { tokens.last() }
     private fun previous(): Token = tokens[current - 1]
 
-    private fun consume(type: TokenType, message: String): Token {
-        if (check(type)) return advance()
-        throw error(peek(), message)
-    }
+    private fun error(token: Token, message: String): Exception =
+        Exception("[line ${token.lineNumber}] Error at '${token.lexeme}': $message")
+}
 
-    private fun error(token: Token, message: String): ParseError {
-        System.err.println("[line ${token.lineNumber}] Error at '${token.lexeme}': $message")
-        return ParseError()
-    }
 
-    private class ParseError : RuntimeException()
+fun parseSingleExpr(): Expr? {
+    return try {
+        parseExpression()
+    } catch (e: Exception) {
+        null
+    }
 }
