@@ -355,7 +355,7 @@ print(myTeam.pokemon->filter(shiny=true));
 
 **OptParamList**          --> e | ParamList
 
-**ParamList**             --> IDENTIFIER { "," IDENTIFIER }
+**ParamList**             --> IDENTIFIER ( "," IDENTIFIER )*
 
 **Block**                 --> "{ StmtList "}"
 
@@ -371,17 +371,17 @@ Expression            --> Assignment
 
 **LeftHandSide**          --> PrimaryWithSuffixes  
 
-**OrExpr**                --> AndExpr { "||" AndExpr }
+**OrExpr**                --> AndExpr ( "||" AndExpr )*
 
-**AndExpr**               --> EqualityExpr { "&&" EqualityExpr }
+**AndExpr**               --> EqualityExpr ( "&&" EqualityExpr )*
 
-**EqualityExpr**          --> RelExpr { ( "==" | "!=" ) RelExpr }
+**EqualityExpr**          --> RelExpr ( ( "==" | "!=" ) RelExpr )*
 
-**RelExpr**               --> AddExpr { ( "<" | ">" | "<=" | ">=" ) AddExpr }
+**RelExpr**               --> AddExpr ( ( "<" | ">" | "<=" | ">=" ) AddExpr )*
 
-**AddExpr**               --> MulExpr { ( "+" | "-" ) MulExpr }
+**AddExpr**               --> MulExpr ( ( "+" | "-" ) MulExpr )*
 
-**MulExpr**               --> UnaryExpr { ( "*" | "/" | "%" ) UnaryExpr }
+**MulExpr**               --> UnaryExpr ( ( "*" | "/" | "%" ) UnaryExpr )*
 
 **UnaryExpr**             --> ( "!" | "-" ) UnaryExpr | PostfixExpr
 
