@@ -316,62 +316,62 @@ print(myTeam.pokemon->filter(shiny=true));
 # Grammar
 
 ### Main Body
-**Program**               --> StmtList
+**program**               --> stmtList
 
-**StmtList**              --> e | Stmt StmtList
+**stmtList**              --> {Stmt}
 
-**Stmt**                  --> NonIfStmt | IfStmt
+**stmt**                  --> NonIfStmt | IfStmt
                         
-
 ### If statements 
-**IfStmt**                --> "if" Expression Block ElseOpt
+**ifStmt**                --> "if" "(" expr ")" "{" block "}" [elseBlock]
 
-**ElseOpt**               --> "else" Block | e
+**elseBlock**               --> "else" "{" block "}"
                         
-
 ### Non-if Statements
-**NonIfStmt**             --> VarDeclStmt
-                           | ExprStmt
-                           | ExploreStmt
-                           | DefineStmt
-                           | PrintStmt
-                           | ThrowBallStmt
-                           | CatchStmt
-                           | RunStmt
-                           | Block
+**nonIfStmt**             --> varDeclStmt
+                           | exprStmt
+                           | exploreStmt
+                           | defineStmt
+                           | printStmt
+                           | throwBallStmt
+                           | catchStmt
+                           | runStmt
+                           | block
                            | ";"
 
-**VarDeclStmt**           --> IDENTIFIER "=" Expression ";"
+**varDeclStmt**           --> IDENTIFIER "=" expr ";"
 
-**ExprStmt**              --> Expression ";" 
+**exprStmt**              --> expr [";"]
 
-**PrintStmt**             --> "print" Expression ";"
+**PrintStmt**             --> "print" Expr ";"
 
-**ThrowBallStmt**         --> "throwBall" "(" Expression ")" ";"
+**ThrowBallStmt**         --> "throwBall" "(" Expr ")" ";"
 
 **RunStmt**               --> "run" ";"
 
-**DefineStmt**            --> "define" IDENTIFIER "(" OptParamList ")" Block
-
-**OptParamList**          --> e | ParamList
+**DefineStmt**            --> "define" IDENTIFIER "(" paramList ")" Block
 
 **ParamList**             --> IDENTIFIER ( "," IDENTIFIER )*
 
 **Block**                 --> "{ StmtList "}"
 
-**ExploreStmt**           --> "explore" "(" Expression ")" Block
-                        | "explore" "(" IDENTIFIER ")" Block
-                        | "explore" Block
+**ExploreStmt**           --> "explore" "(" Expr ")" "{" Block "}"
+                       
 
 ### Precedence
-Expression            --> Assignment
+expression            --> assignExpr
 
-#### Assignment is right-associative: a = b = c  => a = (b = c)
-**Assignment**            --> OrExpr | LeftHandSide "=" Assignment
+#### assignExpr is right-associative: a = b = c  => a = (b = c)
+**assignExpr**            --> orExpr | [variableExpr|propertyAccessExpr] "=" assignExpr
 
-**LeftHandSide**          --> PrimaryWithSuffixes  
+**variableExpr**                --> identifier
 
-**OrExpr**                --> AndExpr ( "||" AndExpr )*
+**propertyAccessExpr**                --> PrimaryWithSuffixes "." IDENTIFIER
+
+**callExpr**                --> PrimaryWithSuffixes "(" OptArgList ")"|PrimaryWithSuffixes "->" IDENTIFIER "(" OptArgList ")"
+
+
+**orExpr**                --> AndExpr ( "||" AndExpr )*
 
 **AndExpr**               --> EqualityExpr ( "&&" EqualityExpr )*
 
@@ -404,19 +404,11 @@ Expression            --> Assignment
                         | "true"
                         | "false"
                         | "null"
-                        | ArrayLiteral
                         | "(" Expression ")"
 
 
 **BUILTIN_CONSTRUCTOR_CALL** --> "SafariZone"  "(" OptArgList ")"   
                            | "Team"  "(" OptArgList ")"   
-                           | "Pokemon"  "(" OptArgList ")"   
-
-**ArrayLiteral**          --> "[" OptArrayElems "]"
-
-**OptArrayElems**         --> e | ArrayElems
-
-**ArrayElems**            --> Expression { "," Expression }
 
 ### Argument List
 **OptArgList**            --> e | ArgList
