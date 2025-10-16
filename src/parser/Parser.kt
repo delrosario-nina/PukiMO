@@ -305,6 +305,17 @@ class Parser(private val tokens: List<Token>) {
                     val member = consume(TokenType.IDENTIFIER, "Expected property name after '.'")
                     expr = PropertyAccessExpr(expr, member)
                 }
+                match(TokenType.LEFT_PAREN) -> {
+                    val args = mutableListOf<Expr>()
+                    if (!check(TokenType.RIGHT_PAREN)) {
+                        do {
+                            args.add(parseExpression())
+                        } while (match(TokenType.COMMA))
+                    }
+                    consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments")
+                    expr = CallExpr(expr, args)
+                }
+
                 match(TokenType.ARROW) -> {
                     val method = consume(TokenType.IDENTIFIER, "Expected method name after '->'")
                     val args = mutableListOf<Expr>()

@@ -44,7 +44,7 @@ fun main() {
 
 
             } catch (e: Exception) {
-                println("[line 1] ${e.message ?: "Unknown error"}")
+                println(e.message ?: "Unknown error")
             }
 
             // Reset buffer and brace count for next input
