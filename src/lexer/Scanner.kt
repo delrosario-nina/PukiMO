@@ -22,9 +22,9 @@ class Scanner {
             "define" -> TokenType.DEFINE_KEYWORD to null
             "print" -> TokenType.PRINT_KEYWORD to null
             "throwBall" -> TokenType.THROWBALL_KEYWORD to null
-            "SafariZone" -> TokenType.SAFARIZONE_KEYWORD to null
-            "Team" -> TokenType.TEAM_KEYWORD to null
             "const" -> TokenType.CONST_KEYWORD to null
+            "SafariZone" -> TokenType.SAFARI_ZONE to null
+            "Team" -> TokenType.TEAM to null
 
             // --------------------
             // Boolean & null literals
@@ -39,8 +39,9 @@ class Scanner {
             else -> {
                 when {
                     // Numeric literal detection
-                    word.matches(Regex("""\d+(\.\d+)?""")) ->
-                        TokenType.NUMERIC_LITERAL to word.toDoubleOrNull()
+                    word.matches(Regex("""\d+""")) ->
+                        TokenType.NUMERIC_LITERAL to word.toInt()
+
 
                     // String literal detection
                     word.matches(Regex(""""([^"\\]|\\.)*"""")) ||
@@ -70,7 +71,7 @@ class Scanner {
         var index = start
         while (index < source.length && (source[index].isDigit() || source[index] == '.')) index++
         val lexeme = source.substring(start, index)
-        val literal = lexeme.toDoubleOrNull()
+        val literal = lexeme.toIntOrNull()
             ?: throw IllegalArgumentException("Invalid number '$lexeme' at line $lineNumber")
         return Token(TokenType.NUMERIC_LITERAL, lexeme, literal, this.lineNumber) to index
     }
@@ -213,4 +214,53 @@ class Scanner {
 
         return tokens
     }
+
+    fun scanAll(source: String): List<Token> {
+        val tokens = mutableListOf<Token>()
+        var index = 0
+
+        while (index < source.length) {
+            val char = source[index]
+
+            // Handle newlines
+            if (char == '\n') {
+                lineNumber++
+                index++
+                continue
+            }
+
+            // Skip whitespace
+            if (char.isWhitespace()) { index++; continue }
+
+            // Single-line comment :>
+            if (char == ':' && index + 1 < source.length && source[index + 1] == '>') {
+                while (index < source.length && source[index] != '\n') index++
+                continue
+            }
+
+            // Multi-line comment /* ... */
+            if (char == '/' && index + 1 < source.length && source[index + 1] == '*') {
+                index += 2
+                while (index < source.length &&
+                    !(source[index] == '*' && index + 1 < source.length && source[index + 1] == '/')) {
+                    if (source[index] == '\n') lineNumber++
+                    index++
+                }
+                if (index + 1 >= source.length)
+                    throw IllegalArgumentException("Unterminated multi-line comment at line $lineNumber")
+                index += 2
+                continue
+            }
+
+            // Scan token
+            val (token, nextIndex) = scanToken(source, index)
+            tokens.add(token)
+            index = nextIndex
+        }
+
+        // Always add EOF token
+        tokens.add(Token(TokenType.EOF, "", null, lineNumber))
+        return tokens
+    }
+
 }

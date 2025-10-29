@@ -11,9 +11,9 @@ enum class TokenType(val symbols: Set<String>? = null) {
         DEFINE_KEYWORD(setOf("define")),
         PRINT_KEYWORD(setOf("print")),
         THROWBALL_KEYWORD(setOf("throwBall")),
-        SAFARIZONE_KEYWORD(setOf("SafariZone")),
-        TEAM_KEYWORD(setOf("Team")),
         CONST_KEYWORD(setOf("const")),
+        SAFARI_ZONE(setOf("SafariZone")),
+        TEAM(setOf("Team")),
 
         // --------------------
         // Literals
