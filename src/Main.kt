@@ -40,9 +40,7 @@ fun main() {
 
                 // Try parsing as a single expression first
                 val expr = parser.parse()
-                    println(printer.print(expr))
-
-
+                printer.printToConsole(expr)
             } catch (e: Exception) {
                 println(e.message ?: "Unknown error")
             }

@@ -23,6 +23,8 @@ class Scanner {
             "print" -> TokenType.PRINT_KEYWORD to null
             "throwBall" -> TokenType.THROWBALL_KEYWORD to null
             "const" -> TokenType.CONST_KEYWORD to null
+            "SafariZone" -> TokenType.SAFARI_ZONE to null
+            "Team" -> TokenType.TEAM to null
 
             // --------------------
             // Boolean & null literals
