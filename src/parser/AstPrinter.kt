@@ -56,6 +56,7 @@ class AstPrinter {
     fun printToConsole(node: AstNode) {
         println(print(node))
     }
+
     private fun parenthesize(name: String, vararg exprs: Expr): String {
         val builder = StringBuilder()
         builder.append("(").append(name)
