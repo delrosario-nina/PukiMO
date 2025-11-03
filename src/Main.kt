@@ -1,36 +1,66 @@
 package parser
 
 import lexer.Scanner
+import evaluator.Evaluator
+import evaluator.RuntimeError
 import java.util.Scanner as JavaScanner
-import parser.Parser
 
 fun main() {
     val scanner = Scanner()
-    val printer = AstPrinter()
-
-    println("Enter an expression (type 'exit' to quit):")
-
+    val evaluator = Evaluator()
     val input = JavaScanner(System.`in`)
+    val buffer = mutableListOf<String>()
+    var openBraces = 0
+
+    println("Enter code (type 'exit' to quit):")
+
     while (true) {
-        print("> ")
+        // Show different prompt if inside a block
+        print(if (openBraces > 0) "… " else "> ")
+
         val line = input.nextLine() ?: break
-        if (line.trim().lowercase() == "exit") break
-        if (line.trim().isEmpty()) continue
+        val trimmed = line.trim()
+        if (trimmed.lowercase() == "exit") break
 
-        try {
-            val tokens = scanner.scanLine(line)
-            val parser = Parser(tokens)
-            val expression = parser.parseSingleExpr()
+        // Skip empty lines at top level
+        if (trimmed.isEmpty() && openBraces == 0) continue
 
-            if (expression != null) {
-                println(printer.print(expression))
-            } else {
-                val program = parser.parse()
-                println(printer.print(program))
+        // Add line to buffer
+        buffer.add(line)
+
+        // Update openBraces count
+        openBraces += line.count { it == '{' } - line.count { it == '}' }
+
+        // Only parse when braces are balanced
+        if (openBraces <= 0 && buffer.isNotEmpty()) {
+            val code = buffer.joinToString("\n")
+
+            try {
+                // Scan the entire multi-line code
+                val tokens = scanner.scanAll(code)
+                val parser = Parser(tokens)
+
+                // Parse the expression/program
+                val ast = parser.parse()
+
+                // Evaluate and print the result
+                val result = evaluator.evaluate(ast)
+
+                // Only print non-null results for single expressions
+                if (ast is Program && ast.stmtList.size == 1 && ast.stmtList[0] is ExprStmt) {
+                    // Single expression - print its value
+                    println(evaluator.stringify(result))
+                }
+
+            } catch (e: RuntimeError) {
+                println("[line ${e.token.lineNumber}] Runtime error: ${e.message}")
+            } catch (e: Exception) {
+                println(e.message ?: "Unknown error")
             }
 
-        } catch (e: Exception) {
-            println("[line 1] ${e.message ?: "Unknown error"}")
+            // Reset buffer and brace count for next input
+            buffer.clear()
+            openBraces = 0
         }
     }
 }
