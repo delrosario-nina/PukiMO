@@ -2,63 +2,51 @@ package parser
 
 import lexer.Scanner
 import evaluator.Evaluator
-import evaluator.RuntimeError
 import java.util.Scanner as JavaScanner
 
 fun main() {
     val scanner = Scanner()
-    val evaluator = Evaluator()
     val input = JavaScanner(System.`in`)
     val buffer = mutableListOf<String>()
     var openBraces = 0
+    val printer = AstPrinter()
+    val evaluator = Evaluator()  // ✅ Add this
 
     println("Enter code (type 'exit' to quit):")
 
     while (true) {
-        // Show different prompt if inside a block
         print(if (openBraces > 0) "… " else "> ")
 
         val line = input.nextLine() ?: break
         val trimmed = line.trim()
         if (trimmed.lowercase() == "exit") break
 
-        // Skip empty lines at top level
         if (trimmed.isEmpty() && openBraces == 0) continue
 
-        // Add line to buffer
         buffer.add(line)
-
-        // Update openBraces count
         openBraces += line.count { it == '{' } - line.count { it == '}' }
 
-        // Only parse when braces are balanced
         if (openBraces <= 0 && buffer.isNotEmpty()) {
             val code = buffer.joinToString("\n")
 
             try {
-                // Scan the entire multi-line code
                 val tokens = scanner.scanAll(code)
                 val parser = Parser(tokens)
-
-                // Parse the expression/program
                 val ast = parser.parse()
 
-                // Evaluate and print the result
-                val result = evaluator.evaluate(ast)
 
-                // Only print non-null results for single expressions
-                if (ast is Program && ast.stmtList.size == 1 && ast.stmtList[0] is ExprStmt) {
-                    // Single expression - print its value
-                    println(evaluator.stringify(result))
+                try {
+                    val result = evaluator.evaluate(ast)
+                    if (result != null) println(result)
+                } catch (e: Exception) {
+                    println("Runtime Error: ${e.message}")
                 }
 
-            } catch (e: RuntimeError) {
-                println("[line ${e.token.lineNumber}] Runtime error: ${e.message}")
+
             } catch (e: Exception) {
                 println(e.message ?: "Unknown error")
             }
 
-            // Reset buffer and brace count for next input
             buffer.clear()
             openBraces = 0
         }
