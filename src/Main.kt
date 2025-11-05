@@ -1,11 +1,13 @@
 package parser
 
 import lexer.Scanner
+import evaluator.Evaluator
+import evaluator.RuntimeError
 import java.util.Scanner as JavaScanner
 
 fun main() {
     val scanner = Scanner()
-    val printer = AstPrinter()
+    val evaluator = Evaluator()
     val input = JavaScanner(System.`in`)
     val buffer = mutableListOf<String>()
     var openBraces = 0
@@ -38,9 +40,20 @@ fun main() {
                 val tokens = scanner.scanAll(code)
                 val parser = Parser(tokens)
 
-                // Try parsing as a single expression first
-                val expr = parser.parse()
-                printer.printToConsole(expr)
+                // Parse the expression/program
+                val ast = parser.parse()
+
+                // Evaluate and print the result
+                val result = evaluator.evaluate(ast)
+
+                // Only print non-null results for single expressions
+                if (ast is Program && ast.stmtList.size == 1 && ast.stmtList[0] is ExprStmt) {
+                    // Single expression - print its value
+                    println(evaluator.stringify(result))
+                }
+
+            } catch (e: RuntimeError) {
+                println("[line ${e.token.lineNumber}] Runtime error: ${e.message}")
             } catch (e: Exception) {
                 println(e.message ?: "Unknown error")
             }
